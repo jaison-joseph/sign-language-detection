@@ -1,10 +1,11 @@
-from libsvm.svmutil import *
-
 import cv2
 import mediapipe as mp
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
+import numpy as np
+
+import time
 
 # For static images:
 '''
@@ -49,13 +50,24 @@ with mp_hands.Hands(
         hand_world_landmarks, mp_hands.HAND_CONNECTIONS, azimuth=5)
 '''
 
+storeSize_ = 100
+store = np.zeros((storeSize_, 21, 3))
+# x = np.zeros((21, 3))
+
+startFlag = False
+while not startFlag:
+  inp = input("Hit 1 to start recording samples")
+  startFlag = True if inp == '1' else False
+
 # For webcam input:
 cap = cv2.VideoCapture(0)
 with mp_hands.Hands(
     model_complexity=0,
     min_detection_confidence=0.5,
+    max_num_hands=1,
     min_tracking_confidence=0.5) as hands:
-  while cap.isOpened():
+  # while cap.isOpened():
+  for counter in range(storeSize_):
     success, image = cap.read()
     if not success:
       print("Ignoring empty camera frame.")
@@ -78,9 +90,19 @@ with mp_hands.Hands(
             hand_landmarks,
             mp_hands.HAND_CONNECTIONS,
             mp_drawing_styles.get_default_hand_landmarks_style(),
-            mp_drawing_styles.get_default_hand_connections_style())
+            mp_drawing_styles.get_default_hand_connections_style()
+        )
+        for i in range(21):
+          store[counter, i, 0] = hand_landmarks.landmark[i].x
+          store[counter, i, 1] = hand_landmarks.landmark[i].y
+          store[counter, i, 2] = hand_landmarks.landmark[i].z
+        print(counter)
     # Flip the image horizontally for a selfie-view display.
     cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
     if cv2.waitKey(5) & 0xFF == 27:
       break
+    # time.sleep(2)
 cap.release()
+print("finished recording samples")
+np.savetxt('c_val.txt', store.reshape(storeSize_, 63))
+print("saved samples")
