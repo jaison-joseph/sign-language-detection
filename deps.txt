@@ -1,0 +1,8 @@
+Using python 3.10
+
+Mediapipe (https://pypi.org/project/mediapipe/) 
+    - (as of 27 March 2023) hasn't released their python 3.11 support for windows
+    - using for the hand detection
+Libsvm (https://www.csie.ntu.edu.tw/~cjlin/libsvm/)
+    - for the SVM classifier
+
