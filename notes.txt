@@ -1,1 +1,6 @@
 Initial accuracy: 76.9231% (80:20 train test split, 100 instances per class, 21 3D coordiantes for each landmark of the hand)
+
+Sources/references:
+    https://github.com/hemanth-nag/Camera_Flask_App
+
+To start the GUI, run the python file app.py

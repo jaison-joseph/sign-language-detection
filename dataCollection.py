@@ -9,6 +9,8 @@ Then the program uses the camera of the device to record
 One can slighly move the hand (that shows the alphabet) slightly around, and move it towards & away from the screen to create 'better' training data
 The coordinates are 3D coordinates in meters, from what is roughly the geometric center of the hand (from: https://google.github.io/mediapipe/solutions/hands)
 This serves as the training sample of a particular alphabet
+
+The data for each alphabet is saved as "<lowercase alphabet>.txt" in a subdirectory "train_data"
 '''
 
 import cv2
@@ -73,5 +75,5 @@ with mp_hands.Hands(
 cap.release()
 print("finished recording samples")
 # set file name here, we can only store 2D shaped data in text file, so 21*3 -> 63*1
-np.savetxt('train_data/c_val.txt', store.reshape(storeSize_, 63))
+np.savetxt('train_data/a_2.txt', store.reshape(storeSize_, 63))
 print("saved samples")

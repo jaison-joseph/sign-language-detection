@@ -1,2 +1,5 @@
 *.model
 train_data/
+__pycache__/
+js/
+shots/

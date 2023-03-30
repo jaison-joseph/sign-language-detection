@@ -6,3 +6,5 @@ Mediapipe (https://pypi.org/project/mediapipe/)
 Libsvm (https://www.csie.ntu.edu.tw/~cjlin/libsvm/)
     - for the SVM classifier
 
+Flask 
+    - for the webpage GUI
