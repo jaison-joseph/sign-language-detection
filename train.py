@@ -11,10 +11,14 @@ The SVM is a classifier, so the letter A is assigned the label 0, B->1, C->2, ..
 '''
 
 from libsvm.svmutil import *
+from libsvm.svm import *
 
 import numpy as np
 
 import string
+
+# to drop into the python repl
+import code
 
 def train():
     # each alphabet(26) has 100 recordings of 21 features (feature -> 3D coordinate -> 21*3=63 numbers) each, 80 for train, 20 for test 
@@ -56,6 +60,16 @@ def train():
 
     # print(p_val)    
 
-    # svm_save_model('a2z_model.model', m)
+    svm_save_model('a2z_model.model', m)
 
-train()
+def loadAndUse():
+    m = svm_load_model('a2z_model.model')
+    arr = np.loadtxt('train_data/a.txt')
+    x0, _ = gen_svm_nodearray(arr[0])
+    label = libsvm.svm_predict(m, x0)
+    print('label: ', chr(ord('A') + int(label)))
+    print('*'*100)
+    # code.interact(local=locals())
+
+# train()
+loadAndUse()

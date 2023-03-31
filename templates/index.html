@@ -5,12 +5,13 @@
                 <form method="post" action="{{ url_for('actions') }}">
                     <input type="submit" value="Stop/Start" name="stop" />
                     <input type="submit" value="Capture" name="click"/>
-                    <input type="submit" value="Grey" name="grey" />
+                    <input type="submit" value="Toggle_prediction" name="toggle_prediction" />
                     <input type="submit" value="Negative" name="neg" />
                     <input type="submit" value="Face Only" name="face" />
                     <input type="submit" value="Start/Stop Recording" name="rec" />
                 </form>
                 <img src="{{ url_for('video_feed') }}" height="80%">
+                <h1>{{test_var}}</h1>
                 <h3 style="font-family:courier;">Instructions:</h3>
                 <ol style="font-family:courier;">
                 <li>Stop/Start--Toggle between stop or start live streaming</li>
