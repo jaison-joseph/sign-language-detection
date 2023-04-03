@@ -4,14 +4,15 @@ the file to add logic and run the GUI
 
 from flask import Flask, render_template, Response, request
 import cv2
-import datetime, time
+import time
+from datetime import datetime
 import os
 
 # imports for feature drawing & extraction
 import mediapipe as mp
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils  # type: ignore
+mp_drawing_styles = mp.solutions.drawing_styles # type: ignore
+mp_hands = mp.solutions.hands # type: ignore
 
 # the trained SVM modeL
 from libsvm.svmutil import *
@@ -19,29 +20,72 @@ from libsvm.svm import *
 
 # data handling
 import numpy as np
+import string
+
+# timer for capture
+from threading import Thread
+
+
+'''
+Countdown class
+    - Has 2 attributes, duration and a label
+    - the duration is the time in seconds that the countdown lasts for
+    - It has a method, work(), that counts down 'duration' seconds by updating the 'label' attribute 
+    - the work() methods uses time.sleep(), so it should be spawned on another thread
+    - This class is used to show the countdown on the camera output before the camera starts capturing
+'''
+class Countdown:
+    def __init__(self, duration: int) -> None:
+        if duration <= 0:
+            raise ValueError
+        self.duration = duration
+        self.label = str(duration)
+    
+    def work(self):
+        counter = self.duration
+        while counter > 0:
+            time.sleep(1)
+            counter -= 1
+            self.label = str(counter)
+
+global countdown_thread, countdown
+countdown = Countdown(3)
+countdown_thread = Thread(target=countdown.work)
 
 # features of each frame
 global features
 features = np.zeros(63)
 
-global store, storeIdx, frameIdx
+global store, storeIdx, frameIdx, labels, current_label
 store = np.zeros((10, 100, 63))
+# uppercase alphabets representing the labels of the sets of training samples collected
+labels = []
+current_label = ''
 storeIdx = -1
 frameIdx = 0
+
+def saveStore():
+    global store, storeIdx, labels
+    # each unique alphabet is a separate file to save
+    for alphabet in set(labels):
+        idxs = [i for i, j in enumerate(labels) if j == alphabet]
+        folderPath = './train_data/'+alphabet
+        if not os.path.exists(folderPath):
+            os.mkdir(folderPath)
+        fileName = alphabet + datetime.now().strftime("%m_%d_%y %H-%M-%S") + ".txt"
+        np.savetxt(
+            folderPath + '/' + fileName, 
+            np.concatenate([store[i] for i in idxs])
+        )
 
 global m
 m = svm_load_model('a2z_model.model')
 
-global capture,rec_frame, toggle_prediction, switch, neg, face, rec, out 
-capture = False
+global capture_features, toggle_prediction, switch, rec
+capture_features = False
 toggle_prediction = 0
-neg = 0
-face = 0
 switch = 1
 rec = 0
-
-global test_var
-test_var = 'mic check'
 
 #make shots directory to save pics
 try:
@@ -52,14 +96,8 @@ except OSError as error:
 #instatiate flask app  
 app = Flask(__name__, template_folder='./templates')
 
-
+global camera
 camera = cv2.VideoCapture(0)
-
-def record(out):
-    global rec_frame
-    while(rec):
-        time.sleep(0.05)
-        out.write(rec_frame) 
 
 '''
 the generator used to yield successive frames from the camera,
@@ -70,7 +108,7 @@ this generator is used to stream the video from the python application to the we
 see more in the video_feed route
 '''
 def gen_frames():  # generate frame by frame from camera
-    global out, capture,rec_frame, test_var, m, store, storeIdx, frameIdx
+    global out, capture_features,rec_frame, m, store, storeIdx, frameIdx, labels, countdown, countdown_thread
     font = cv2.FONT_HERSHEY_SIMPLEX
     org = (50, 50)
     font_scale = 1
@@ -111,18 +149,24 @@ def gen_frames():  # generate frame by frame from camera
                 mp_drawing_styles.get_default_hand_landmarks_style(),
                 mp_drawing_styles.get_default_hand_connections_style()
             )
-            if toggle_prediction or capture:
+            if toggle_prediction or capture_features:
                 for i, j in enumerate([0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60]):
                     features[j] = hand_landmarks.landmark[i].x
                     features[j+1] = hand_landmarks.landmark[i].y
                     features[j+2] = hand_landmarks.landmark[i].z
-                if capture:
-                    if frameIdx < 100:
-                        store[storeIdx, frameIdx] = features
-                        frameIdx += 1
+                if capture_features:
+                    if countdown_thread.is_alive():
+                        cv2.putText(frame, countdown.label, org, font, font_scale, color, thickness, cv2.LINE_AA)
                     else:
-                        capture = False
-                        print('done capturing')
+                        if frameIdx < 100:
+                            cv2.putText(frame, 'Recording...', org, font, font_scale, color, thickness, cv2.LINE_AA)
+                            store[storeIdx, frameIdx] = features
+                            frameIdx += 1
+                        else:
+                            capture_features = False
+                            labels.append(current_label)
+                            frameIdx = 0
+                            print('done capturing')
                 # Convert a Python-format instance to svm_nodearray, a ctypes structure
                 else:
                     converted, __ = gen_svm_nodearray(features)
@@ -139,8 +183,12 @@ def gen_frames():  # generate frame by frame from camera
 
 @app.route('/')
 def index():
-    return render_template('index.html', test_var = test_var)
-    
+    return render_template('index.html', parts = {"video": True, "alphabet": False}, msg = '')
+
+@app.route('/test/alert')
+def test_alert():
+    return render_template('index.html', parts = {"video": False, "alphabet": False}, msg = 'This is a test alert for the alert parameter')
+
     
 @app.route('/video_feed')
 def video_feed():
@@ -154,33 +202,64 @@ def video_feed():
 
 @app.route('/actions', methods = ['GET', 'POST'])
 def actions():
-    global switch, camera, capture, toggle_prediction, storeIdx, frameIdx 
+    global switch, camera, capture_features, toggle_prediction, storeIdx, frameIdx, labels
     '''
     the buttons in the GUI are part of an HTML form (each one triggering a submit) that makes a POST request to this route
     '''
-    if request.method == 'POST':
-        if request.form.get('click') == 'Capture':
-            if storeIdx == 9:
-                print('store full')
-            else:
-                storeIdx += 1
-                capture = True
-                frameIdx = 0
-        elif request.form.get('toggle_prediction') == 'Toggle_prediction':
-            toggle_prediction = not toggle_prediction 
-        
-        elif request.form.get('stop') == 'Stop/Start':
-            if(switch==1):
-                switch=0
-                camera.release()
-                cv2.destroyAllWindows()
-                
-            else:
-                camera = cv2.VideoCapture(0)
-                switch=1
+    if request.method == 'GET':
+        return render_template('index.html', parts={"video": True, "alphabet": False}, msg = '')
+    
+    choice = request.form.get('click')
 
-    return render_template('index.html', test_var = test_var)
+    # logic reaches here if request is a POST
+    if choice == 'Capture_alphabet_samples':
+        if storeIdx == 9:
+            return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'Store full, please save samples before adding new ones')
+        else:
+            storeIdx += 1
+            capture_features = True
+            frameIdx = 0
+            # this response will cause the webpage to show a form to enter the label (aphabet) for the new recording
+            return render_template('index.html', parts={"video": False, "alphabet": True}, msg = '')
+    
+    elif choice == 'Toggle_alphabet_prediction':
+        toggle_prediction = not toggle_prediction 
+        return render_template('index.html', parts={"video": True, "alphabet": False}, msg = 'No recording avaiable to save.')
 
+    elif choice == 'Save_training_samples':
+        if storeIdx == -1:
+            return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'No recording avaiable to save.')
+        saveStore()
+        storeIdx = -1
+        labels = []
+        return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'Save complete.')
+    
+    elif choice == 'Stop/Start_camera':
+        if camera.isOpened():
+            camera.release()
+            cv2.destroyAllWindows()
+            return render_template('index.html', parts={"video": False, "alphabet": False}, msg = '')
+        else:
+            camera = cv2.VideoCapture(0)
+            return render_template('index.html', parts={"video": True, "alphabet": False}, msg = '')
+
+    return render_template('404.html')
+
+@app.route('/alphabet', methods = ['POST'])
+def alphabet():
+    global current_label, capture_features, countdown_thread
+    action = request.form.get('action')
+    if action == 'Submit':
+        char = request.form.get('alphabet')
+        if char is None:
+            return render_template('index.html', parts={"video": False, "alphabet": True}, msg = 'Please enter a valid alphabet')
+        char = char.upper()
+        if char not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' or char == '':
+            return render_template('index.html', parts={"video": False, "alphabet": True}, msg = 'Please enter a valid alphabet')
+        current_label = char
+        countdown_thread.start()
+        capture_features = True
+    return render_template('index.html', parts={"video": True, "alphabet": False}, msg = '')
 
 if __name__ == '__main__':
     app.run()

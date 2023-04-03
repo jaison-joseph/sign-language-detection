@@ -1,4 +1,5 @@
-Using python 3.10
+Python (https://www.python.org/)
+    - version 3.10
 
 Mediapipe (https://pypi.org/project/mediapipe/) 
     - (as of 27 March 2023) hasn't released their python 3.11 support for windows
@@ -6,5 +7,11 @@ Mediapipe (https://pypi.org/project/mediapipe/)
 Libsvm (https://www.csie.ntu.edu.tw/~cjlin/libsvm/)
     - for the SVM classifier
 
-Flask 
+Numpy (https://numpy.org/)
+    - for data handling 
+
+Flask (https://flask.palletsprojects.com/)
     - for the webpage GUI
+
+OpenCV (https://opencv.org/)
+    - for camera usage
