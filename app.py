@@ -56,6 +56,53 @@ countdown_thread = Thread(target=countdown.work)
 global features
 features = np.zeros(63)
 
+class Store:
+    '''
+    Constructor
+    recordCount: int: the # of records to store
+    recordDims: list[int]: the dimensions of each record
+    '''
+    def __init__(self, recordCount, recordDims) -> None:
+        self.store_ = np.zeros([recordCount]+recordDims)
+        self.storeIdx_ = 0
+        self.recordShape_ = self.store_.shape[1:]
+        self.storeSize_ = recordCount
+        self.labels_ = ['' for _ in range(recordCount)]
+
+    # x is a record to store, a numpy array of dimension self.store_.shape[1:]
+    def storeRecord(self, x, y):
+        if self.storeIdx_ == self.storeSize_:
+            raise MemoryError
+        if x.shape != self.recordShape_:
+            raise ValueError()
+        self.store_[self.storeIdx_] = x
+        self.labels_[self.storeIdx_] = y
+        self.storeIdx_ += 1
+
+    def saveStore(self):
+        if self.storeIdx_ == 0:
+            return
+        for alphabet in set(self.labels_):
+            idxs = [i for i, j in enumerate(self.labels_) if j == alphabet]
+            folderPath = './train_data/'+alphabet
+            if not os.path.exists(folderPath):
+                os.mkdir(folderPath)
+            fileName = alphabet + datetime.now().strftime("%m_%d_%y %H-%M-%S") + ".txt"
+            np.savetxt(
+                folderPath + '/' + fileName, 
+                np.concatenate([self.store_[i] for i in idxs])
+            )
+
+    def flushStore(self):
+        self.storeIdx_ = 0
+
+    def deleteEntry(self):
+        pass
+
+
+
+    
+
 global store, storeIdx, frameIdx, labels, current_label
 store = np.zeros((10, 100, 63))
 # uppercase alphabets representing the labels of the sets of training samples collected
@@ -86,12 +133,6 @@ capture_features = False
 toggle_prediction = 0
 switch = 1
 rec = 0
-
-#make shots directory to save pics
-try:
-    os.mkdir('./shots')
-except OSError as error:
-    pass
 
 #instatiate flask app  
 app = Flask(__name__, template_folder='./templates')
@@ -126,11 +167,6 @@ def gen_frames():  # generate frame by frame from camera
         if not success: 
             break
         
-        if(rec):
-            rec_frame=frame
-            frame= cv2.putText(cv2.flip(frame,1),"Recording...", (0,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255),4)
-            frame=cv2.flip(frame,1)
-
         # feature extraction & updating frame
         frame.flags.writeable = False
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -138,41 +174,52 @@ def gen_frames():  # generate frame by frame from camera
         
         frame.flags.writeable = True
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+        if not results.multi_hand_landmarks:
+            _, buffer = cv2.imencode('.bmp', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                b'Content-Type: image/bmp\r\n\r\n' + frame + b'\r\n')
+            continue
         
-        if results.multi_hand_landmarks:
-            # for hand_landmarks in results.multi_hand_landmarks:
-            hand_landmarks = results.multi_hand_landmarks[0]
-            mp_drawing.draw_landmarks(
-                frame,
-                hand_landmarks,
-                mp_hands.HAND_CONNECTIONS,
-                mp_drawing_styles.get_default_hand_landmarks_style(),
-                mp_drawing_styles.get_default_hand_connections_style()
-            )
-            if toggle_prediction or capture_features:
-                for i, j in enumerate([0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60]):
-                    features[j] = hand_landmarks.landmark[i].x
-                    features[j+1] = hand_landmarks.landmark[i].y
-                    features[j+2] = hand_landmarks.landmark[i].z
-                if capture_features:
-                    if countdown_thread.is_alive():
-                        cv2.putText(frame, countdown.label, org, font, font_scale, color, thickness, cv2.LINE_AA)
-                    else:
-                        if frameIdx < 100:
-                            cv2.putText(frame, 'Recording...', org, font, font_scale, color, thickness, cv2.LINE_AA)
-                            store[storeIdx, frameIdx] = features
-                            frameIdx += 1
-                        else:
-                            capture_features = False
-                            labels.append(current_label)
-                            frameIdx = 0
-                            print('done capturing')
-                # Convert a Python-format instance to svm_nodearray, a ctypes structure
+        # if results.multi_hand_landmarks:
+        # for hand_landmarks in results.multi_hand_landmarks:
+        hand_landmarks = results.multi_hand_landmarks[0]
+        mp_drawing.draw_landmarks(
+            frame,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style()
+        )
+        if capture_features:
+            for i, j in enumerate([0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60]):
+                features[j] = hand_landmarks.landmark[i].x
+                features[j+1] = hand_landmarks.landmark[i].y
+                features[j+2] = hand_landmarks.landmark[i].z
+            if countdown_thread.is_alive():
+                cv2.putText(frame, countdown.label, org, font, font_scale, color, thickness, cv2.LINE_AA)
+            else:
+                if frameIdx < 100:
+                    cv2.putText(frame, 'Recording...', org, font, font_scale, color, thickness, cv2.LINE_AA)
+                    store[storeIdx, frameIdx] = features
+                    frameIdx += 1
                 else:
-                    converted, __ = gen_svm_nodearray(features)
-                    label = libsvm.svm_predict(m, converted)
-                    label = chr(int(label) + ord('A'))
-                    cv2.putText(frame, label, org, font, font_scale, color, thickness, cv2.LINE_AA)
+                    capture_features = False
+                    labels.append(current_label)
+                    frameIdx = 0
+                    print('done capturing')
+        # Convert a Python-format instance to svm_nodearray, a ctypes structure
+        elif toggle_prediction:
+            for i, j in enumerate([0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60]):
+                features[j] = hand_landmarks.landmark[i].x
+                features[j+1] = hand_landmarks.landmark[i].y
+                features[j+2] = hand_landmarks.landmark[i].z
+
+            converted, __ = gen_svm_nodearray(features)
+            label = libsvm.svm_predict(m, converted)
+            label = chr(int(label) + 65)
+            cv2.putText(frame, label, org, font, font_scale, color, thickness, cv2.LINE_AA)
             
 
         _, buffer = cv2.imencode('.bmp', frame)

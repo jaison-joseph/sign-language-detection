@@ -13,6 +13,7 @@
                 {% endif %}
                 {% if parts.alphabet == true %}
                     <form method="post" action="{{ url_for('alphabet') }}">
+                        The camera will record the features from 1000 consecutive frames in your hand. Move the hand (displaying the alphabet) around the frame
                         Enter the name of the alphabet you're about to record.
                         <input type="text" maxlength="1" id="alphabet" name="alphabet"><br>
                         <input type="submit" value="Submit" name="action"/>
