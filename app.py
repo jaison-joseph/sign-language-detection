@@ -20,7 +20,7 @@ from libsvm.svm import *
 
 # data handling
 import numpy as np
-import string
+from string import ascii_uppercase, ascii_lowercase
 
 # timer for capture
 from threading import Thread
@@ -53,7 +53,6 @@ countdown = Countdown(3)
 countdown_thread = Thread(target=countdown.work)
 
 # features of each frame
-global features
 features = np.zeros(63)
 
 class Store:
@@ -81,6 +80,7 @@ class Store:
 
     def saveStore(self):
         if self.storeIdx_ == 0:
+            print("Nothing to save; store is empty")
             return
         for alphabet in set(self.labels_):
             idxs = [i for i, j in enumerate(self.labels_) if j == alphabet]
@@ -93,22 +93,24 @@ class Store:
                 np.concatenate([self.store_[i] for i in idxs])
             )
 
+    def canStore(self):
+        return self.storeIdx_ < self.storeSize_
+    
+    def isEmpty(self):
+        return self.storeIdx_ == 0
+
     def flushStore(self):
         self.storeIdx_ = 0
 
     def deleteEntry(self):
-        pass
+        pass    
 
-
-
-    
-
-global store, storeIdx, frameIdx, labels, current_label
-store = np.zeros((10, 100, 63))
+# global store, frameIdx, current_label
+# store = np.zeros((20, 300, 63))
+store = Store(20, [300, 63])
 # uppercase alphabets representing the labels of the sets of training samples collected
-labels = []
+one_recording = np.zeros((300, 63))
 current_label = ''
-storeIdx = -1
 frameIdx = 0
 
 def saveStore():
@@ -200,13 +202,20 @@ def gen_frames():  # generate frame by frame from camera
             if countdown_thread.is_alive():
                 cv2.putText(frame, countdown.label, org, font, font_scale, color, thickness, cv2.LINE_AA)
             else:
-                if frameIdx < 100:
-                    cv2.putText(frame, 'Recording...', org, font, font_scale, color, thickness, cv2.LINE_AA)
-                    store[storeIdx, frameIdx] = features
+                if frameIdx < 300:
+                    converted, __ = gen_svm_nodearray(features)
+
+                    label = libsvm.svm_predict(m, converted)
+                    label = chr(int(label) + 65) + ' (Converting)'
+                    cv2.putText(frame, label, org, font, font_scale, color, thickness, cv2.LINE_AA)
+                    
+                    # cv2.putText(frame, 'Recording...', org, font, font_scale, color, thickness, cv2.LINE_AA)
+                    
+                    one_recording[frameIdx] = features
                     frameIdx += 1
                 else:
                     capture_features = False
-                    labels.append(current_label)
+                    store.storeRecord(one_recording, current_label)
                     frameIdx = 0
                     print('done capturing')
         # Convert a Python-format instance to svm_nodearray, a ctypes structure
@@ -249,7 +258,7 @@ def video_feed():
 
 @app.route('/actions', methods = ['GET', 'POST'])
 def actions():
-    global switch, camera, capture_features, toggle_prediction, storeIdx, frameIdx, labels
+    global switch, camera, capture_features, toggle_prediction, frameIdx, current_label, store
     '''
     the buttons in the GUI are part of an HTML form (each one triggering a submit) that makes a POST request to this route
     '''
@@ -260,25 +269,24 @@ def actions():
 
     # logic reaches here if request is a POST
     if choice == 'Capture_alphabet_samples':
-        if storeIdx == 9:
-            return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'Store full, please save samples before adding new ones')
-        else:
-            storeIdx += 1
-            capture_features = True
-            frameIdx = 0
+        if store.canStore():
+            # capture_features = True
+            # frameIdx = 0
             # this response will cause the webpage to show a form to enter the label (aphabet) for the new recording
             return render_template('index.html', parts={"video": False, "alphabet": True}, msg = '')
+        else:
+            return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'Store full, please save samples before adding new ones')
+            
     
     elif choice == 'Toggle_alphabet_prediction':
         toggle_prediction = not toggle_prediction 
-        return render_template('index.html', parts={"video": True, "alphabet": False}, msg = 'No recording avaiable to save.')
+        return render_template('index.html', parts={"video": True, "alphabet": False}, msg = '')
 
     elif choice == 'Save_training_samples':
-        if storeIdx == -1:
+        if store.isEmpty():
             return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'No recording avaiable to save.')
-        saveStore()
-        storeIdx = -1
-        labels = []
+        store.saveStore()
+        store.flushStore()
         return render_template('index.html', parts={"video": False, "alphabet": False}, msg = 'Save complete.')
     
     elif choice == 'Stop/Start_camera':
@@ -301,9 +309,10 @@ def alphabet():
         if char is None:
             return render_template('index.html', parts={"video": False, "alphabet": True}, msg = 'Please enter a valid alphabet')
         char = char.upper()
-        if char not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' or char == '':
+        if char not in ascii_uppercase or char == '':
             return render_template('index.html', parts={"video": False, "alphabet": True}, msg = 'Please enter a valid alphabet')
         current_label = char
+        countdown_thread = Thread(target=countdown.work)
         countdown_thread.start()
         capture_features = True
     return render_template('index.html', parts={"video": True, "alphabet": False}, msg = '')

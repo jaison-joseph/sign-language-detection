@@ -4,10 +4,11 @@ the file to add logic and run the GUI
 
 from flask import Flask, render_template, Response, request
 import cv2
-import datetime, time
+import datetime
+from time import sleep
 
 # timer for capture
-from threading import Thread
+from threading import Thread, Lock
 
 #instatiate flask app  
 app = Flask(__name__, template_folder='./templates')
@@ -21,13 +22,29 @@ class Countdown:
             raise ValueError
         self.duration = duration
         self.label = str(duration)
+        self.lock = Lock()
+        self.wait = False
+        self.doWork = False
+
+    def work_manager(self):
+        while True:
+            self.lock.acquire()
+            
     
     def work(self):
         counter = self.duration
-        while counter > 0:
-            time.sleep(1)
-            counter -= 1
-            self.label = str(counter)
+        self.start_lock.acquire()
+        while self.doWork:
+            self.lock.acquire()
+            if not self.doWork:
+                return
+            while counter > 0:
+                sleep(1)
+                counter -= 1
+                self.label = str(counter)
+            self.lock.release()
+            sleep(0.5)
+        
 
 global start_record, start_record_countdown, t
 start_record = False
