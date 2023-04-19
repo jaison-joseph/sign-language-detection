@@ -4,3 +4,8 @@ Sources/references:
     https://github.com/hemanth-nag/Camera_Flask_App
 
 To start the GUI, run the python file app.py
+
+After training on instances captured solely using GUI, accuracy was 20 percent (with the testing sampels from the original dataset)
+    this is the v2 model
+
+train_data_2: 1000 samples per alphabet, variation in 

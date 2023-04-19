@@ -84,7 +84,7 @@ class Store:
             return
         for alphabet in set(self.labels_):
             idxs = [i for i, j in enumerate(self.labels_) if j == alphabet]
-            folderPath = './train_data/'+alphabet
+            folderPath = './train_data_2/'+alphabet
             if not os.path.exists(folderPath):
                 os.mkdir(folderPath)
             fileName = alphabet + datetime.now().strftime("%m_%d_%y %H-%M-%S") + ".txt"
@@ -106,10 +106,10 @@ class Store:
         pass    
 
 # global store, frameIdx, current_label
-# store = np.zeros((20, 300, 63))
-store = Store(20, [300, 63])
+# store = np.zeros((20, 1000, 63))
+store = Store(20, [1000, 63])
 # uppercase alphabets representing the labels of the sets of training samples collected
-one_recording = np.zeros((300, 63))
+one_recording = np.zeros((1000, 63))
 current_label = ''
 frameIdx = 0
 
@@ -128,7 +128,7 @@ def saveStore():
         )
 
 global m
-m = svm_load_model('a2z_model.model')
+m = svm_load_model('a2z_v4_model.model')
 
 global capture_features, toggle_prediction, switch, rec
 capture_features = False
@@ -157,6 +157,7 @@ def gen_frames():  # generate frame by frame from camera
     font_scale = 1
     color = (0, 0, 0)
     thickness = 2
+    idxs = {i: (3*i, 3*i+1, 3*i+2) for i in range(21)}
     j = 0
     hands = mp_hands.Hands(
         model_complexity = 0,
@@ -195,18 +196,18 @@ def gen_frames():  # generate frame by frame from camera
             mp_drawing_styles.get_default_hand_connections_style()
         )
         if capture_features:
-            for i, j in enumerate([0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60]):
-                features[j] = hand_landmarks.landmark[i].x
-                features[j+1] = hand_landmarks.landmark[i].y
-                features[j+2] = hand_landmarks.landmark[i].z
+            for i, j in idxs.items():
+                features[j[0]] = hand_landmarks.landmark[i].x
+                features[j[1]] = hand_landmarks.landmark[i].y
+                features[j[2]] = hand_landmarks.landmark[i].z
             if countdown_thread.is_alive():
                 cv2.putText(frame, countdown.label, org, font, font_scale, color, thickness, cv2.LINE_AA)
             else:
-                if frameIdx < 300:
+                if frameIdx < 1000:
                     converted, __ = gen_svm_nodearray(features)
 
                     label = libsvm.svm_predict(m, converted)
-                    label = chr(int(label) + 65) + ' (Converting)'
+                    label = chr(int(label) + 65) + ' (Recording)'
                     cv2.putText(frame, label, org, font, font_scale, color, thickness, cv2.LINE_AA)
                     
                     # cv2.putText(frame, 'Recording...', org, font, font_scale, color, thickness, cv2.LINE_AA)
@@ -229,6 +230,8 @@ def gen_frames():  # generate frame by frame from camera
             label = libsvm.svm_predict(m, converted)
             label = chr(int(label) + 65)
             cv2.putText(frame, label, org, font, font_scale, color, thickness, cv2.LINE_AA)
+            label = ', '.join([str(features[0]*100)[:5], str(features[1]*100)[:5], str(features[2]*100)[:5]])
+            cv2.putText(frame, label, (org[0], org[1]+50), font, 0.5, color, 1, cv2.LINE_AA)
             
 
         _, buffer = cv2.imencode('.bmp', frame)

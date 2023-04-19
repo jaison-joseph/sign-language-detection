@@ -1,4 +1,6 @@
 train_data/
+train_data_2/
+test_data/
 __pycache__/
 js/
 shots/
