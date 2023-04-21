@@ -376,19 +376,22 @@ def train_v7():
     svm_save_model('a2z_v7_model.model', m)
 
 def train_v8():
+    trainData_1, trainLabels_1 = getDataAndLabels('train_data')
     trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
     trainData_3, trainLabels_3 = getDataAndLabels('train_data_3')
     trainData_4, trainLabels_4 = getDataAndLabels('train_data_4')
+    trainData_5, trainLabels_5 = getDataAndLabels('train_data_5')
 
     trainData = np.concatenate(
-        (trainData_2, trainData_3, trainData_4)
+        (trainData_1, trainData_2, trainData_3, trainData_4, trainData_5)
     )
     trainLabels = np.concatenate(
-        (trainLabels_2, trainLabels_3, trainLabels_4)
+        (trainLabels_1, trainLabels_2, trainLabels_3, trainLabels_4, trainLabels_5)
     )
 
-    trainData_2, trainLabels_2 = None, None
+    trainData_1, trainLabels_1, trainData_2, trainLabels_2 = None, None, None, None
     trainData_3, trainLabels_3, trainData_4, trainLabels_4 = None, None, None, None
+    trainData_5, trainLabels_5 = None, None
 
     testData, testLabels = getDataAndLabels('test_data')
 
@@ -398,6 +401,11 @@ def train_v8():
     p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
 
     print(p_acc)    
+    print('*'*100)
+
+    class_acc = perClassAcc(testLabels, p_label)
+    inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
+    list(map(print, inaccurates.items()))
     print('*'*100)
 
     # save model
@@ -501,12 +509,12 @@ def testFoo():
 # train_v6()
 # loadAndTest('a2z_v4_model.model', 'test_data')
 # train_v7()
-# train_v8()
+train_v8()
 # train_v9()
-train_v10()
+# train_v10()
 # loadAndTest('a2z_v5_model.model', 'test_data')
 # loadAndTest('a2z_v6_model.model', 'test_data')
 # loadAndTest('a2z_v7_model.model', 'test_data')
-loadAndTest('a2z_v9_model.model', 'test_data')
+# loadAndTest('a2z_v9_model.model', 'test_data')
 # loadAndTest('a2z_v10_model.model', 'test_data')
 # testFoo()

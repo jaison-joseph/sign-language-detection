@@ -10,9 +10,9 @@ import os
 
 # imports for feature drawing & extraction
 import mediapipe as mp
-mp_drawing = mp.solutions.drawing_utils  # type: ignore
-mp_drawing_styles = mp.solutions.drawing_styles # type: ignore
-mp_hands = mp.solutions.hands # type: ignore
+mp_drawing = mp.solutions.drawing_utils  
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_hands = mp.solutions.hands
 
 # the trained SVM modeL
 from libsvm.svmutil import *
@@ -55,6 +55,9 @@ countdown_thread = Thread(target=countdown.work)
 # features of each frame
 features = np.zeros(63)
 
+'''
+Helper class to store recorded training samples 
+'''
 class Store:
     '''
     Constructor
@@ -230,8 +233,8 @@ def gen_frames():  # generate frame by frame from camera
             label = libsvm.svm_predict(m, converted)
             label = chr(int(label) + 65)
             cv2.putText(frame, label, org, font, font_scale, color, thickness, cv2.LINE_AA)
-            label = ', '.join([str(features[0]*100)[:5], str(features[1]*100)[:5], str(features[2]*100)[:5]])
-            cv2.putText(frame, label, (org[0], org[1]+50), font, 0.5, color, 1, cv2.LINE_AA)
+            # label = ', '.join([str(features[0]*100)[:5], str(features[1]*100)[:5], str(features[2]*100)[:5]])
+            # cv2.putText(frame, label, (org[0], org[1]+50), font, 0.5, color, 1, cv2.LINE_AA)
             
 
         _, buffer = cv2.imencode('.bmp', frame)
@@ -321,7 +324,6 @@ def alphabet():
     return render_template('index.html', parts={"video": True, "alphabet": False}, msg = '')
 
 if __name__ == '__main__':
-    app.run()
-    
-camera.release()
-cv2.destroyAllWindows()  
+    app.run()    
+    camera.release()
+    cv2.destroyAllWindows()  

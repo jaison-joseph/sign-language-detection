@@ -13,7 +13,8 @@
                 {% endif %}
                 {% if parts.alphabet == true %}
                     <form method="post" action="{{ url_for('alphabet') }}">
-                        The camera will record the features from 300 consecutive frames in your hand. Move the hand (displaying the alphabet) around the frame
+                        The camera will record the features from consecutive frames in your hand. Move the hand (displaying the alphabet) around the frame
+                        A countdown timer will start once you enter the alphabet.
                         Enter the name of the alphabet you're about to record.
                         <input type="text" maxlength="1" id="alphabet" name="alphabet"><br>
                         <input type="submit" value="Submit" name="action"/>
@@ -22,12 +23,10 @@
                 {% endif %}
                 <h3 style="font-family:courier;">Instructions:</h3>
                 <ol style="font-family:courier;">
-                <li>Stop/Start--Toggle between stop or start live streaming</li>
-                <li>Capture--Take still-shot and save in the 'shots' directory</li>
-                <li>Grey--Toggle between grayscale and RGB output</li>
-                <li>Negative--Toggle between negative and RGB output</li>
-                <li>Face Only--Shows just your face if present(Toggle on/off)</li> 
-                <li>Start/Stop Recording--Toggle between starting and stopping video recording</li> </ol>
+                <li>Stop/Start_camera--Turn the camera on/off</li>
+                <li>Capture_alphabet_samples--capture alphabet samples from frames of a video recorded through the camera</li>
+                <li>Toggle_alphabet_prediction--Switch on/off alphabet prediction</li>
+                <li>Save_training_samples--Save the recorded samples, if any to the disk</li> 
                 {% if msg|length > 0 %}
                     <script>
                         console.log('got a message');
