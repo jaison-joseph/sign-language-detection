@@ -1,4 +1,4 @@
-Initial accuracy: 76.9231% (80:20 train test split, 100 instances per class, 21 3D coordiantes for each landmark of the hand)
+
 
 Sources/references:
     https://github.com/hemanth-nag/Camera_Flask_App
@@ -12,3 +12,35 @@ train_data_2:
 train_data_3: data from train_data
 train_data_4: data from train_data_2
 train_data_5: combines data from train_data & train_data_2
+train_data_6: train_data, train_data_2 & train_data_3
+
+
+92.54
+    train_data:
+        ['J', 'N', 'X', 'Y']
+    train_data_2:
+        ['J', 'N', 'X', 'Y']
+    train_data_3:
+        ['J', 'N', 'X', 'Y']
+
+92.89
+    train_data:
+        ['J', 'N', 'X', 'Y']
+
+92.67
+    train_data:
+        ['J', 'N', 'X', 'Y']
+    train_data_2:
+        ['J', 'N', 'X', 'Y']
+
+92.84
+    train_data_2:
+        ['J', 'N', 'X', 'Y']
+    train_data_3:
+        ['J', 'N', 'X', 'Y']
+
+92.84
+    train_data:
+        ['J', 'N', 'X', 'Y']
+    train_data_3:
+        ['J', 'N', 'X', 'Y']

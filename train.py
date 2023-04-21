@@ -24,6 +24,15 @@ import glob
 # to drop into the python repl
 import code
 
+def perClassAcc(testLabels, predictedLabels):
+    lk = {i: [0, 0] for i in set(testLabels)}
+    bools = np.equal(testLabels, predictedLabels)
+    for i, v in enumerate(bools):
+        lk[testLabels[i]][0 if v else 1] += 1
+    letters_lk = {chr(ord('A') + int(i)): j for i, j in lk.items()}
+    return letters_lk
+
+
 def train():
     # each alphabet(26) has 100 recordings of 21 features (feature -> 3D coordinate -> 21*3=63 numbers) each, 80 for train, 20 for test 
     trainData = np.zeros((90*26, 63))
@@ -255,7 +264,7 @@ def train_v4():
     # save model
     svm_save_model('a2z_v4_model.model', m)
 
-def getDataAndLabels(folderName):
+def getDataAndLabels(folderName, removeLetters = []):
     label_lk_ = {ch: n for n, ch in enumerate(string.ascii_lowercase)} | {ch: n for n, ch in enumerate(string.ascii_uppercase)} 
 
     # load the training data & create the training data labels 
@@ -272,6 +281,15 @@ def getDataAndLabels(folderName):
     ])
 
     data = np.concatenate(data, axis = 0)
+
+    if len(removeLetters) != 0:
+        removeLetterNums = list(map(
+            lambda x: ord(x) - ord('A') if x.isupper() else ord(x) - ord('a'), 
+            removeLetters
+        ))
+        keepIdxs = [i for i, j in enumerate(labels) if j not in removeLetterNums]
+        data = data[keepIdxs]
+        labels = labels[keepIdxs]
 
     return data, labels
 
@@ -328,13 +346,129 @@ def train_v6():
     # save model
     svm_save_model('a2z_v6_model.model', m)
 
-def perClassAcc(testLabels, predictedLabels):
-    lk = {i: [0, 0] for i in set(testLabels)}
-    bools = np.equal(testLabels, predictedLabels)
-    for i, v in enumerate(bools):
-        lk[testLabels[i]][0 if v else 1] += 1
-    letters_lk = {chr(ord('A') + int(i)): j for i, j in lk.items()}
-    return letters_lk
+def train_v7():
+    trainData_1, trainLabels_1 = getDataAndLabels('train_data')
+    trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
+    trainData_3, trainLabels_3 = getDataAndLabels('train_data_3')
+    trainData_4, trainLabels_4 = getDataAndLabels('train_data_4')
+
+    trainData = np.concatenate(
+        (trainData_1, trainData_2, trainData_3, trainData_4)
+    )
+    trainLabels = np.concatenate(
+        (trainLabels_1, trainLabels_2, trainLabels_3, trainLabels_4)
+    )
+
+    trainData_1, trainLabels_1, trainData_2, trainLabels_2 = None, None, None, None
+    trainData_3, trainLabels_3, trainData_4, trainLabels_4 = None, None, None, None
+
+    testData, testLabels = getDataAndLabels('test_data')
+
+    # train model
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+    print(p_acc)    
+    print('*'*100)
+
+    # save model
+    svm_save_model('a2z_v7_model.model', m)
+
+def train_v8():
+    trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
+    trainData_3, trainLabels_3 = getDataAndLabels('train_data_3')
+    trainData_4, trainLabels_4 = getDataAndLabels('train_data_4')
+
+    trainData = np.concatenate(
+        (trainData_2, trainData_3, trainData_4)
+    )
+    trainLabels = np.concatenate(
+        (trainLabels_2, trainLabels_3, trainLabels_4)
+    )
+
+    trainData_2, trainLabels_2 = None, None
+    trainData_3, trainLabels_3, trainData_4, trainLabels_4 = None, None, None, None
+
+    testData, testLabels = getDataAndLabels('test_data')
+
+    # train model
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+    print(p_acc)    
+    print('*'*100)
+
+    # save model
+    svm_save_model('a2z_v8_model.model', m)
+
+def train_v9():
+    trainData_1, trainLabels_1 = getDataAndLabels('train_data')
+    trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
+    trainData_3, trainLabels_3 = getDataAndLabels('train_data_3')
+    trainData_4, trainLabels_4 = getDataAndLabels('train_data_4')
+    trainData_5, trainLabels_5 = getDataAndLabels('train_data_5')
+    trainData_6, trainLabels_6 = getDataAndLabels('train_data_6')
+
+    trainData = np.concatenate(
+        (trainData_1, trainData_2, trainData_3, trainData_4, trainData_5, trainData_6)
+    )
+    trainLabels = np.concatenate(
+        (trainLabels_1, trainLabels_2, trainLabels_3, trainLabels_4, trainLabels_5, trainLabels_6)
+    )
+
+    trainData_1, trainLabels_1, trainData_2, trainLabels_2 = None, None, None, None
+    trainData_3, trainLabels_3, trainData_4, trainLabels_4 = None, None, None, None
+    trainData_5, trainLabels_5, trainData_6, trainLabels_6 = None, None, None, None
+
+    testData, testLabels = getDataAndLabels('test_data')
+
+    # train model
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+    print(p_acc)    
+    print('*'*100)
+
+    # save model
+    svm_save_model('a2z_v9_model.model', m)
+
+def train_v10():
+    trainData_1, trainLabels_1 = getDataAndLabels('train_data', ['J', 'N', 'X', 'Y'])
+    trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
+    trainData_3, trainLabels_3 = getDataAndLabels('train_data_3')
+    trainData_4, trainLabels_4 = getDataAndLabels('train_data_4')
+    trainData_5, trainLabels_5 = getDataAndLabels('train_data_5')
+    trainData_6, trainLabels_6 = getDataAndLabels('train_data_6')
+
+    trainData = np.concatenate(
+        (trainData_1, trainData_2, trainData_3, trainData_4, trainData_5, trainData_6)
+    )
+    trainLabels = np.concatenate(
+        (trainLabels_1, trainLabels_2, trainLabels_3, trainLabels_4, trainLabels_5, trainLabels_6)
+    )
+
+    trainData_1, trainLabels_1, trainData_2, trainLabels_2 = None, None, None, None
+    trainData_3, trainLabels_3, trainData_4, trainLabels_4 = None, None, None, None
+    trainData_5, trainLabels_5, trainData_6, trainLabels_6 = None, None, None, None
+
+    testData, testLabels = getDataAndLabels('test_data')
+
+    # train model
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+    print(p_acc)    
+    print('*'*100)
+    class_acc = perClassAcc(testLabels, p_label)
+    inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
+    list(map(print, inaccurates.items()))
+    print('*'*100)
+
+    # save model
+    svm_save_model('a2z_v10_model.model', m)
 
 def loadAndTest(model_name, testFolderName):
     m = svm_load_model(model_name)
@@ -347,6 +481,16 @@ def loadAndTest(model_name, testFolderName):
     list(map(print, inaccurates.items()))
     print('*'*100)
 
+def testFoo():
+    print('whole set')
+    data, labels = getDataAndLabels('test_data')
+    print(len(data))
+    print(set(labels))
+    print('*' * 100)
+    print('after removing the b\'s ')
+    data, labels = getDataAndLabels('test_data', ['b'])
+    print(len(data))
+    print(set(labels))
 
 # train()
 # loadAndUse()
@@ -356,5 +500,13 @@ def loadAndTest(model_name, testFolderName):
 # train_v5()
 # train_v6()
 # loadAndTest('a2z_v4_model.model', 'test_data')
+# train_v7()
+# train_v8()
+# train_v9()
+train_v10()
 # loadAndTest('a2z_v5_model.model', 'test_data')
-loadAndTest('a2z_v6_model.model', 'test_data')
+# loadAndTest('a2z_v6_model.model', 'test_data')
+# loadAndTest('a2z_v7_model.model', 'test_data')
+loadAndTest('a2z_v9_model.model', 'test_data')
+# loadAndTest('a2z_v10_model.model', 'test_data')
+# testFoo()
