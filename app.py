@@ -84,7 +84,7 @@ class Store:
             return
         for alphabet in set(self.labels_):
             idxs = [i for i, j in enumerate(self.labels_) if j == alphabet]
-            folderPath = './train_data_2/'+alphabet
+            folderPath = './train_data_3/'+alphabet
             if not os.path.exists(folderPath):
                 os.mkdir(folderPath)
             fileName = alphabet + datetime.now().strftime("%m_%d_%y %H-%M-%S") + ".txt"
@@ -128,7 +128,7 @@ def saveStore():
         )
 
 global m
-m = svm_load_model('a2z_v4_model.model')
+m = svm_load_model('a2z_v5_model.model')
 
 global capture_features, toggle_prediction, switch, rec
 capture_features = False

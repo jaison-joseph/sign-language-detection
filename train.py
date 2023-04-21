@@ -235,6 +235,11 @@ def train_v4():
 
     testData = np.concatenate(testData, axis = 0)
 
+    print(trainData.shape)
+    print(trainLabels.shape)
+    print(testData.shape)
+    print(testLabels.shape)
+
 
     # train model
     m = svm_train(trainLabels, trainData, '-t 0 -q')
@@ -243,16 +248,113 @@ def train_v4():
 
     print(p_acc)    
     print('*'*100)
-    print(p_label)    
-    print('*'*100)
+    # print(p_label)    
+    # print('*'*100)
 
 
     # save model
     svm_save_model('a2z_v4_model.model', m)
+
+def getDataAndLabels(folderName):
+    label_lk_ = {ch: n for n, ch in enumerate(string.ascii_lowercase)} | {ch: n for n, ch in enumerate(string.ascii_uppercase)} 
+
+    # load the training data & create the training data labels 
+    file_paths = glob.glob(folderName + '/*/*.txt')
+
+    labels = [label_lk_[i[i.index('\\')+1]] for i in file_paths]
+
+    data = [
+        np.loadtxt(f) for f in file_paths
+    ]    
+
+    labels = np.concatenate([
+        np.ones(data[i].shape[0])*label for i, label in enumerate(labels)
+    ])
+
+    data = np.concatenate(data, axis = 0)
+
+    return data, labels
+
+def train_v5():
+    trainData_1, trainLabels_1 = getDataAndLabels('train_data')
+    trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
+
+    trainData = np.concatenate(
+        (trainData_1, trainData_2)
+    )
+    trainLabels = np.concatenate(
+        (trainLabels_1, trainLabels_2)
+    )
+
+    trainData_1, trainLabels_1, trainData_2, trainLabels_2 = None, None, None, None
+
+    testData, testLabels = getDataAndLabels('test_data')
+
+    # train model
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+    print(p_acc)    
+    print('*'*100)
+
+    # save model
+    svm_save_model('a2z_v5_model.model', m)
+
+def train_v6():
+    trainData_1, trainLabels_1 = getDataAndLabels('train_data')
+    trainData_2, trainLabels_2 = getDataAndLabels('train_data_2')
+    trainData_3, trainLabels_3 = getDataAndLabels('train_data_3')
+
+    trainData = np.concatenate(
+        (trainData_1, trainData_2, trainData_3)
+    )
+    trainLabels = np.concatenate(
+        (trainLabels_1, trainLabels_2, trainLabels_3)
+    )
+
+    trainData_1, trainLabels_1, trainData_2, trainLabels_2, trainData_3, trainLabels_3 = None, None, None, None, None, None
+
+    testData, testLabels = getDataAndLabels('test_data')
+
+    # train model
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+    print(p_acc)    
+    print('*'*100)
+
+    # save model
+    svm_save_model('a2z_v6_model.model', m)
+
+def perClassAcc(testLabels, predictedLabels):
+    lk = {i: [0, 0] for i in set(testLabels)}
+    bools = np.equal(testLabels, predictedLabels)
+    for i, v in enumerate(bools):
+        lk[testLabels[i]][0 if v else 1] += 1
+    letters_lk = {chr(ord('A') + int(i)): j for i, j in lk.items()}
+    return letters_lk
+
+def loadAndTest(model_name, testFolderName):
+    m = svm_load_model(model_name)
+    testData, testLabels = getDataAndLabels(testFolderName)
+    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+    print(p_acc)    
+    print('*'*100)
+    class_acc = perClassAcc(testLabels, p_label)
+    inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
+    list(map(print, inaccurates.items()))
+    print('*'*100)
 
 
 # train()
 # loadAndUse()
 # train_v2()
 # train_v3()
-train_v4()
+# train_v4()
+# train_v5()
+# train_v6()
+# loadAndTest('a2z_v4_model.model', 'test_data')
+# loadAndTest('a2z_v5_model.model', 'test_data')
+loadAndTest('a2z_v6_model.model', 'test_data')
