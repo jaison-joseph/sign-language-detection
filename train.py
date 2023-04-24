@@ -185,24 +185,6 @@ def train_v3():
 
     # svm_save_model('a2z_v3_model.model', m)
 
-'''
-written for variable # of training & testing samples 
-assumes that the file structure of the training & testing files are as follows:
-
-    test_data/
-        A/
-            <bla bla bla>.txt
-            <bla bla bla>.txt
-            <bla bla bla>.txt
-        B/
-            <bla bla bla>.txt
-            <bla bla bla>.txt
-
-        ....
-
-        Z/
-            <bla bla bla>.txt
-'''
 def train_v4():
 
     # a/A -> 0, b/B -> 1, ... z/Z: 25
@@ -264,17 +246,47 @@ def train_v4():
     # save model
     svm_save_model('a2z_v4_model.model', m)
 
+'''
+
+a function to load the data from a sub directory name provided as an argument
+
+assumes that the file structure of the training & testing files are as follows:
+
+    test_data/
+        A/
+            <bla bla bla>.txt
+            <bla bla bla>.txt
+            <bla bla bla>.txt
+        B/
+            <bla bla bla>.txt
+            <bla bla bla>.txt
+
+        ....
+
+        Z/
+            <bla bla bla>.txt
+
+returns two ndarrays, data & labels (data.shape[0] == labels.shape[0], labels is a 1D array)
+'''
 def getDataAndLabels(folderName, removeLetters = []):
     label_lk_ = {ch: n for n, ch in enumerate(string.ascii_lowercase)} | {ch: n for n, ch in enumerate(string.ascii_uppercase)} 
 
     # load the training data & create the training data labels 
     file_paths = glob.glob(folderName + '/*/*.txt')
 
+    if len(file_paths) == 0:
+        print(f'In call to getDataAndLabels(folderName = {folderName}, removeLetters = {removeLetters}), no files found')
+        return None, None
+
     labels = [label_lk_[i[i.index('\\')+1]] for i in file_paths]
 
-    data = [
-        np.loadtxt(f) for f in file_paths
-    ]    
+    try:
+        data = [
+            np.loadtxt(f) for f in file_paths
+        ]   
+    except ValueError:
+        print(f'In call to getDataAndLabels(folderName = {folderName}, removeLetters = {removeLetters}), file format of one of the .txt files found was not a ndarray ')
+        return None, None 
 
     labels = np.concatenate([
         np.ones(data[i].shape[0])*label for i, label in enumerate(labels)
@@ -409,7 +421,10 @@ def train_v8():
     print('*'*100)
 
     # save model
-    svm_save_model('a2z_v8_model.model', m)
+    folderPath = './' + 'models'
+    if not os.path.exists(folderPath):
+        os.mkdir(folderPath)
+    svm_save_model('models/' + 'a2z_v8_model.model', m)
 
 def train_v9():
     trainData_1, trainLabels_1 = getDataAndLabels('train_data')
@@ -500,21 +515,122 @@ def testFoo():
     print(len(data))
     print(set(labels))
 
-# train()
-# loadAndUse()
-# train_v2()
-# train_v3()
-# train_v4()
-# train_v5()
-# train_v6()
-# loadAndTest('a2z_v4_model.model', 'test_data')
-# train_v7()
-train_v8()
-# train_v9()
-# train_v10()
-# loadAndTest('a2z_v5_model.model', 'test_data')
-# loadAndTest('a2z_v6_model.model', 'test_data')
-# loadAndTest('a2z_v7_model.model', 'test_data')
-# loadAndTest('a2z_v9_model.model', 'test_data')
-# loadAndTest('a2z_v10_model.model', 'test_data')
-# testFoo()
+# a function to crash, on purpose
+# you get to know what exceptions to catch!
+def crashFunction():
+    a,b = getDataAndLabels('lol')
+    print(a)
+    print(b)
+    # filePath = os.path.join(
+    #     os.getcwd(),
+    #     'lol'
+    # )
+    # fileNames = os.listdir(filePath)
+    # print(fileNames)
+
+crashFunction()
+
+'''
+simple function to call to train, test and save model
+
+input:
+    trainDataPaths:
+        any iterable sequence that contains a list of the paths of the base directories containing the training samples
+        if any of the filePaths are not found, the function will return and not proceed
+    testDataPath:
+        path to the base directory containing the testting samples
+        if any of the filePaths are not found, the function will return and not proceed
+    modelPath: 
+        path to the directory where the model will be saved
+        By default, set to a folder called models/
+        If left empty, will save in the current directory
+    modelName:
+        the name to save the newly trained model as
+'''
+def genericTrain(
+    trainDataPaths,
+    testDataPath = None,
+    modelPath = 'models',
+    modelName = None
+):
+    
+    shouldTest = (testDataPath is not None)
+    shouldSave = (modelName is not None)
+
+    allData = [getDataAndLabels(p) for p in trainDataPaths]
+    trainData = np.concatenate([i[0] for i in allData])
+    trainLabels = np.concatenate([i[1] for i in allData])
+    allData = None
+
+    if trainData is None:
+        print('Could not load data properly')
+        return
+    if trainLabels is None:
+        print('Could not create labels properly')
+        return
+    
+    if shouldTest:
+        testData, testLabels = getDataAndLabels(testDataPath)
+        if testData is None:
+            print('Could not laod data properly')
+            return
+        if testLabels is None:
+            print('Could not create labels properly')
+            return
+    
+    m = svm_train(trainLabels, trainData, '-t 0 -q')
+
+    if shouldTest:
+        p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+        print(p_acc)    
+        print('*'*100)
+
+        class_acc = perClassAcc(testLabels, p_label)
+        inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
+        list(map(print, inaccurates.items()))
+        print('*'*100)
+
+    if shouldSave:
+        
+        # remove trailing '/'
+        if modelPath[-1] == '/':
+            modelPath = modelPath[:-1]
+        
+        # get all files in the directory we're gonna save in
+        filePath = os.path.join(
+            os.getcwd(),
+            modelPath
+        )
+        try:
+            fileNames = os.listdir(filePath)
+        except FileNotFoundError:
+            print('the specified path to save the model could not be found/accessed. Will save to current directory')
+            modelPath = ''
+            fileNames = os.listdir(os.getcwd())
+
+
+        # strip out the '.model' extension if it was added
+        if '.model' in modelName:
+            noExt = modelName[:modelName.index('.model')]
+        else:
+            noExt = modelName
+        
+
+        if noExt + '.model' in fileNames:
+            splits = [noExt, '_', '0']
+            noExt = ''.join(splits)
+            while noExt + '.model' in fileNames:
+                splits[-1] = str(int(splits[-1])+1)
+                noExt = ''.join(splits)
+            print(f'Warning: {splits[0]}.model will be saved as {noExt}.model because the original file name already exists.')
+
+        finalFileName = noExt + '.model'
+        svm_save_model(modelPath + '/' + finalFileName, m)
+
+# genericTrain(
+#     ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5', 'train_data_6'],
+#     'test_data',
+#     'models',
+#     'a2z_v9_model.model'
+# )
