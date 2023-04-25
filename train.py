@@ -454,6 +454,25 @@ def loadAndTest(model_name, testFolderName, showPerClassAcc = True):
         list(map(print, inaccurates.items()))
         print('*'*100)
 
+def loadAndTest_v2(model_names, testDataPaths, showPerClassAcc = True):
+    
+    allData = [getDataAndLabels(p) for p in testDataPaths]
+    testData = np.concatenate([i[0] for i in allData])
+    testLabels = np.concatenate([i[1] for i in allData])
+    allData = None
+    for mName in model_names:
+        m = svm_load_model(mName)
+        p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
+
+        print(p_acc)    
+        print('*'*100)
+
+        if showPerClassAcc:
+            class_acc = perClassAcc(testLabels, p_label)
+            inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
+            list(map(print, inaccurates.items()))
+            print('*'*100)
+
 def testFoo():
     print('whole set')
     data, labels = getDataAndLabels('test_data')
@@ -507,15 +526,15 @@ input:
 def genericTrain(
     trainDataPaths,
     trainDataExcludes = [],
-    testDataPath = None,
+    testDataPaths = None,
     modelPath = 'models',
     modelName = None
 ):
     
-    shouldTest = (testDataPath is not None)
+    shouldTest = (testDataPaths is not None)
     shouldSave = (modelName is not None)
 
-    # check if empty
+    # check if empty, returns true if not empty
     if (trainDataExcludes):
         # check if mismatch in lengths of trainingDataPaths and trainingDataExcludes
         if len(trainDataExcludes) != len(trainDataPaths):
@@ -536,7 +555,10 @@ def genericTrain(
         return
     
     if shouldTest:
-        testData, testLabels = getDataAndLabels(testDataPath)
+        allData = [getDataAndLabels(p, trainDataExcludes[i]) for i, p in enumerate(testDataPaths)]
+        testData = np.concatenate([i[0] for i in allData])
+        testLabels = np.concatenate([i[1] for i in allData])
+        allData = None
         if testData is None:
             print('Could not laod data properly')
             return
@@ -596,16 +618,31 @@ def genericTrain(
         svm_save_model(modelPath + '/' + finalFileName, m)
 
 def testAll():
-    loadAndTest('models/initial/a2z_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v2_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v3_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v4_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v5_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v6_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v7_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v8_model.model', 'test_data')
-    loadAndTest('models/initial/a2z_v9_model.model', 'test_data')
+    loadAndTest('models/v2/a2z_model.model', 'test_data')
+    loadAndTest('models/v2/a2z_v2_model.model', 'test_data')
+    loadAndTest('models/v2/a2z_v3_model.model', 'test_data')
+    loadAndTest('models/v2/a2z_v4_model.model', 'test_data')
+    loadAndTest('models/v2/a2z_v5_model.model', 'test_data')
+    loadAndTest('models/v2/a2z_v6_model.model', 'test_data')
+    loadAndTest('models/v3/a2z_v7_model.model', 'test_data')
+    loadAndTest('models/v3/a2z_v8_model.model', 'test_data')
+    loadAndTest('models/v3/a2z_v9_model.model', 'test_data')
 
+def testAll_v2():
+    loadAndTest_v2(
+        [
+            'models/v2/a2z_v1_model.model',
+            'models/v2/a2z_v2_model.model',
+            'models/v2/a2z_v3_model.model',
+            'models/v2/a2z_v4_model.model',
+            'models/v2/a2z_v5_model.model',
+            'models/v2/a2z_v6_model.model',
+            'models/v3/a2z_v7_model.model',
+            'models/v3/a2z_v8_model.model',
+            'models/v3/a2z_v9_model.model'
+        ],
+        ['test_data', 'test_data_2']
+    )
 def trainAll():
     # genericTrain(
     #     trainDataPaths = ['train_data_old'],
@@ -656,11 +693,11 @@ def trainAll():
     #         [],
     #         [],
     #         list(
-    #         set(list('BJMNSTVWX')) - set(list('JMSX'))
+    #         set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUVXZ'))
     #         )
     #     ],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v3',
+    #     testDataPaths = ['test_data', 'test_data_2'],
+    #     modelPath = 'models/v4',
     #     modelName = 'a2z_v7_model.model'
     # )
 
@@ -671,14 +708,14 @@ def trainAll():
     #         [],
     #         [],
     #         list(
-    #         set(list('BJMNSTVWX')) - set(list('JMSX'))
+    #             set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUVXZ'))
     #         ),
     #         list(
-    #         set(list('JNRVX')) - set(list('JSX'))
+    #             set(list('IJMNRSTUVXYZ')) - set(list('IJMNSTUXZ'))
     #         )
     #     ],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v3',
+    #     testDataPaths = ['test_data', 'test_data_2'],
+    #     modelPath = 'models/v4',
     #     modelName = 'a2z_v8_model.model'
     # )
 
@@ -689,19 +726,19 @@ def trainAll():
             [],
             [],
             list(
-            set(list('BJMNSTVWX')) - set(list('JMSX'))
+                set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUVXZ'))
             ),
             list(
-            set(list('JNRSVXY')) - set(list('JSX'))
+                set(list('IJMNRSTUVXYZ')) - set(list('IJMNSTUXZ'))
             ),
             list(
-            set(list('JNSXY')) - set(list('JSX'))
+            set(list('JMNSTUXYZ')) - set(list('JMNSTUXZ'))
             )
         ],
-        testDataPath = 'test_data',
-        modelPath = 'models/v3',
+        testDataPaths = ['test_data', 'test_data_2'],
+        modelPath = 'models/v4',
         modelName = 'a2z_v9_model.model'
     )
 
 trainAll()
-# testAll()
+# testAll_v2()
