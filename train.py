@@ -33,57 +33,6 @@ def perClassAcc(testLabels, predictedLabels):
     return letters_lk
 
 
-def train():
-    # each alphabet(26) has 100 recordings of 21 features (feature -> 3D coordinate -> 21*3=63 numbers) each, 80 for train, 20 for test 
-    trainData = np.zeros((90*26, 63))
-    testData = np.zeros((10*26, 63))
-
-    trainLabels = np.zeros(90*26)
-    testLabels = np.zeros(10*26)
-    for label in range(26):
-        trainLabels[label*90 : (label+1)*90] = label
-        testLabels[label*10 : (label+1)*10] = label
-    
-    # there's files 'a.txt', 'b.txt', .... 'z.txt'
-    for i, ch in enumerate(string.ascii_lowercase):
-        arr = np.loadtxt('train_data/'+ch+'.txt')
-        trainData[i*90 : (i+1)*90] = arr[:90]
-        testData[i*10 : (i+1)*10] = arr[90:]
-
-    # print(arr.size)
-    # print(arr.shape)
-    # for i in range(4):
-    #     m = svm_train(trainLabels, trainData, '-t '+str(i)+' -q')
-
-    #     p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
-
-    #     print(p_acc)    
-    #     print('*'*100)
-    #     print(p_label)    
-    #     print('*'*100)
-
-    m = svm_train(trainLabels, trainData, '-t 2 -q')
-
-    p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
-
-    print(p_acc)    
-    print('*'*100)
-    print(p_label)    
-    print('*'*100)
-
-    # print(p_val)    
-
-    svm_save_model('a2z_model.model', m)
-
-def loadAndUse():
-    m = svm_load_model('a2z_model.model')
-    arr = np.loadtxt('train_data/a.txt')
-    x0, _ = gen_svm_nodearray(arr[0])
-    label = libsvm.svm_predict(m, x0)
-    print('label: ', chr(ord('A') + int(label)))
-    print('*'*100)
-    # code.interact(local=locals())
-
 # takes in first 300 features from the frist file of each alphabets samples
 def train_v2():
     trainData = np.zeros((300*26, 63))
@@ -493,16 +442,17 @@ def train_v10():
     # save model
     svm_save_model('a2z_v10_model.model', m)
 
-def loadAndTest(model_name, testFolderName):
+def loadAndTest(model_name, testFolderName, showPerClassAcc = True):
     m = svm_load_model(model_name)
     testData, testLabels = getDataAndLabels(testFolderName)
     p_label, p_acc, p_val = svm_predict(testLabels, testData, m)
     print(p_acc)    
     print('*'*100)
-    class_acc = perClassAcc(testLabels, p_label)
-    inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
-    list(map(print, inaccurates.items()))
-    print('*'*100)
+    if showPerClassAcc:
+        class_acc = perClassAcc(testLabels, p_label)
+        inaccurates = {i: j for i, j in class_acc.items() if j[1] != 0}
+        list(map(print, inaccurates.items()))
+        print('*'*100)
 
 def testFoo():
     print('whole set')
@@ -528,7 +478,7 @@ def crashFunction():
     # fileNames = os.listdir(filePath)
     # print(fileNames)
 
-crashFunction()
+# crashFunction()
 
 '''
 simple function to call to train, test and save model
@@ -537,18 +487,26 @@ input:
     trainDataPaths:
         any iterable sequence that contains a list of the paths of the base directories containing the training samples
         if any of the filePaths are not found, the function will return and not proceed
+    trainDataExcludes:
+        list of lists of letters to exclude from each file in trainingDataPaths
     testDataPath:
         path to the base directory containing the testting samples
         if any of the filePaths are not found, the function will return and not proceed
     modelPath: 
-        path to the directory where the model will be saved
+        path to the directory where the model will be saved, it MUST be created
         By default, set to a folder called models/
         If left empty, will save in the current directory
+        If the specified direcotry isn't found, the file will be saved in the current working directory
+            In either case, if a file with the provided name already exists, the model will be saved with a different, unique name
     modelName:
         the name to save the newly trained model as
+        If a file with the same name is found in the provided directory,
+        the model will be saved in with another file name that is not present in
+        the current directory
 '''
 def genericTrain(
     trainDataPaths,
+    trainDataExcludes = [],
     testDataPath = None,
     modelPath = 'models',
     modelName = None
@@ -557,7 +515,15 @@ def genericTrain(
     shouldTest = (testDataPath is not None)
     shouldSave = (modelName is not None)
 
-    allData = [getDataAndLabels(p) for p in trainDataPaths]
+    # check if empty
+    if (trainDataExcludes):
+        # check if mismatch in lengths of trainingDataPaths and trainingDataExcludes
+        if len(trainDataExcludes) != len(trainDataPaths):
+            print(f'lengths of trainDataPaths ({len(trainDataPaths)}) does not match length of trainDataExcludes ({len(trainDataExcludes)})')
+            return
+        allData = [getDataAndLabels(p, trainDataExcludes[i]) for i, p in enumerate(trainDataPaths)]
+    else:
+        allData = [getDataAndLabels(p) for p in trainDataPaths]
     trainData = np.concatenate([i[0] for i in allData])
     trainLabels = np.concatenate([i[1] for i in allData])
     allData = None
@@ -602,6 +568,7 @@ def genericTrain(
             os.getcwd(),
             modelPath
         )
+        # if the 
         try:
             fileNames = os.listdir(filePath)
         except FileNotFoundError:
@@ -616,7 +583,7 @@ def genericTrain(
         else:
             noExt = modelName
         
-
+        # keep trying a file that isn't present in the directory
         if noExt + '.model' in fileNames:
             splits = [noExt, '_', '0']
             noExt = ''.join(splits)
@@ -628,9 +595,113 @@ def genericTrain(
         finalFileName = noExt + '.model'
         svm_save_model(modelPath + '/' + finalFileName, m)
 
-# genericTrain(
-#     ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5', 'train_data_6'],
-#     'test_data',
-#     'models',
-#     'a2z_v9_model.model'
-# )
+def testAll():
+    loadAndTest('models/initial/a2z_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v2_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v3_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v4_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v5_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v6_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v7_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v8_model.model', 'test_data')
+    loadAndTest('models/initial/a2z_v9_model.model', 'test_data')
+
+def trainAll():
+    # genericTrain(
+    #     trainDataPaths = ['train_data_old'],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v2',
+    #     modelName = 'a2z_v1_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data'],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v2',
+    #     modelName = 'a2z_v2_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data_old', 'train_data'],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v2',
+    #     modelName = 'a2z_v3_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data_2'],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v2',
+    #     modelName = 'a2z_v4_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data', 'train_data_2'],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v2',
+    #     modelName = 'a2z_v5_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data', 'train_data_2', 'train_data_3'],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v2',
+    #     modelName = 'a2z_v6_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4'],
+    #     trainDataExcludes = [
+    #         [],
+    #         [],
+    #         [],
+    #         list(
+    #         set(list('BJMNSTVWX')) - set(list('JMSX'))
+    #         )
+    #     ],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v3',
+    #     modelName = 'a2z_v7_model.model'
+    # )
+
+    # genericTrain(
+    #     trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5'],
+    #     trainDataExcludes = [
+    #         [],
+    #         [],
+    #         [],
+    #         list(
+    #         set(list('BJMNSTVWX')) - set(list('JMSX'))
+    #         ),
+    #         list(
+    #         set(list('JNRVX')) - set(list('JSX'))
+    #         )
+    #     ],
+    #     testDataPath = 'test_data',
+    #     modelPath = 'models/v3',
+    #     modelName = 'a2z_v8_model.model'
+    # )
+
+    genericTrain(
+        trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5', 'train_data_6'],
+        trainDataExcludes = [
+            [],
+            [],
+            [],
+            list(
+            set(list('BJMNSTVWX')) - set(list('JMSX'))
+            ),
+            list(
+            set(list('JNRSVXY')) - set(list('JSX'))
+            ),
+            list(
+            set(list('JNSXY')) - set(list('JSX'))
+            )
+        ],
+        testDataPath = 'test_data',
+        modelPath = 'models/v3',
+        modelName = 'a2z_v9_model.model'
+    )
+
+trainAll()
+# testAll()

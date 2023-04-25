@@ -32,10 +32,10 @@ from string import ascii_uppercase
 from threading import Thread
 
 # global constants
-SAMPLE_COUNT_ = 1000                        # the number of samples recorded when the user requests to record samples
+SAMPLE_COUNT_ = 700                        # the number of samples recorded when the user requests to record samples
 STORE_SIZE_ = 20                            # the maxmium number of samples that the store can hold before the user has to save them to record new ones
-FOLDER_NAME_ = 'train_data'                 # the name of the folder (will create if non-existent to save the recorded samples to)
-MODEL_NAME_ = 'models/a2z_v9_model.model'   # the folder+name of the model to load, so that the user can interact with the model
+FOLDER_NAME_ = 'test_data_2'                 # the name of the folder (will create if non-existent to save the recorded samples to)
+MODEL_NAME_ = 'models/v3/a2z_v9_model.model'   # the folder+name of the model to load, so that the user can interact with the model
 
 
 '''
