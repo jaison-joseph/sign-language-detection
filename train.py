@@ -555,7 +555,7 @@ def genericTrain(
         return
     
     if shouldTest:
-        allData = [getDataAndLabels(p, trainDataExcludes[i]) for i, p in enumerate(testDataPaths)]
+        allData = [getDataAndLabels(p) for p in testDataPaths]
         testData = np.concatenate([i[0] for i in allData])
         testLabels = np.concatenate([i[1] for i in allData])
         allData = None
@@ -643,81 +643,86 @@ def testAll_v2():
         ],
         ['test_data', 'test_data_2']
     )
+
 def trainAll():
-    # genericTrain(
-    #     trainDataPaths = ['train_data_old'],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v2',
-    #     modelName = 'a2z_v1_model.model'
-    # )
+    # the training dataset is tiny, so the testing dataset is smaller as well
+    genericTrain(
+        trainDataPaths = ['train_data_old'],
+        testDataPath = ['test_data'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v1_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data'],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v2',
-    #     modelName = 'a2z_v2_model.model'
-    # )
+    # the training dataset is tiny, so the testing dataset is smaller as well
+    genericTrain(
+        trainDataPaths = ['train_data'],
+        testDataPath = ['test_data'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v2_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data_old', 'train_data'],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v2',
-    #     modelName = 'a2z_v3_model.model'
-    # )
+    # the training dataset is tiny, so the testing dataset is smaller as well
+    genericTrain(
+        trainDataPaths = ['train_data_old', 'train_data'],
+        testDataPath = ['test_data'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v3_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data_2'],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v2',
-    #     modelName = 'a2z_v4_model.model'
-    # )
+    # the training dataset is tiny, so the testing dataset is smaller as well
+    genericTrain(
+        trainDataPaths = ['train_data_2'],
+        testDataPath = ['test_data'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v4_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data', 'train_data_2'],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v2',
-    #     modelName = 'a2z_v5_model.model'
-    # )
+    genericTrain(
+        trainDataPaths = ['train_data', 'train_data_2'],
+        testDataPaths = ['test_data', 'test_data_2'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v5_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data', 'train_data_2', 'train_data_3'],
-    #     testDataPath = 'test_data',
-    #     modelPath = 'models/v2',
-    #     modelName = 'a2z_v6_model.model'
-    # )
+    genericTrain(
+        trainDataPaths = ['train_data', 'train_data_2', 'train_data_3'],
+        testDataPaths = ['test_data', 'test_data_2'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v6_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4'],
-    #     trainDataExcludes = [
-    #         [],
-    #         [],
-    #         [],
-    #         list(
-    #         set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUVXZ'))
-    #         )
-    #     ],
-    #     testDataPaths = ['test_data', 'test_data_2'],
-    #     modelPath = 'models/v4',
-    #     modelName = 'a2z_v7_model.model'
-    # )
+    genericTrain(
+        trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4'],
+        trainDataExcludes = [
+            [],
+            [],
+            [],
+            list(
+            set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUXZ'))
+            )
+        ],
+        testDataPaths = ['test_data', 'test_data_2'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v7_model.model'
+    )
 
-    # genericTrain(
-    #     trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5'],
-    #     trainDataExcludes = [
-    #         [],
-    #         [],
-    #         [],
-    #         list(
-    #             set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUVXZ'))
-    #         ),
-    #         list(
-    #             set(list('IJMNRSTUVXYZ')) - set(list('IJMNSTUXZ'))
-    #         )
-    #     ],
-    #     testDataPaths = ['test_data', 'test_data_2'],
-    #     modelPath = 'models/v4',
-    #     modelName = 'a2z_v8_model.model'
-    # )
+    genericTrain(
+        trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5'],
+        trainDataExcludes = [
+            [],
+            [],
+            [],
+            list(
+            set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUXZ'))
+            ),
+            list(
+                set(list('IJMNRSTUVXYZ')) - set(list('IJMNSTUXZ'))
+            )
+        ],
+        testDataPaths = ['test_data', 'test_data_2'],
+        modelPath = 'models/v5',
+        modelName = 'a2z_v8_model.model'
+    )
 
     genericTrain(
         trainDataPaths = ['train_data', 'train_data_2', 'train_data_3', 'train_data_4', 'train_data_5', 'train_data_6'],
@@ -726,17 +731,17 @@ def trainAll():
             [],
             [],
             list(
-                set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUVXZ'))
+                set(list('BIJMNSTUVWXZ')) - set(list('JMNSTUXZ'))
             ),
             list(
                 set(list('IJMNRSTUVXYZ')) - set(list('IJMNSTUXZ'))
             ),
             list(
-            set(list('JMNSTUXYZ')) - set(list('JMNSTUXZ'))
+                set(list('JMNSTUXYZ')) - set(list('JMNSXZ'))
             )
         ],
         testDataPaths = ['test_data', 'test_data_2'],
-        modelPath = 'models/v4',
+        modelPath = 'models/v5',
         modelName = 'a2z_v9_model.model'
     )
 
