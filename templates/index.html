@@ -1,39 +1,53 @@
-<body>
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8  offset-lg-2">
-                <form method="post" action="{{ url_for('actions') }}">
-                    <input type="submit" value="Stop/Start_camera" name="click" />
-                    <input type="submit" value="Capture_alphabet_samples" name="click"/>
-                    <input type="submit" value="Toggle_alphabet_prediction" name="click" >
-                    <input type="submit" value="Save_training_samples" name="click" >
-                </form>
-                {% if parts.video == true %}
-                    <img src="{{ url_for('video_feed') }}" height="80%">
-                {% endif %}
-                {% if parts.alphabet == true %}
-                    <form method="post" action="{{ url_for('alphabet') }}">
-                        The camera will record the features from consecutive frames in your hand. Move the hand (displaying the alphabet) around the frame
-                        A countdown timer will start once you enter the alphabet.
-                        Enter the name of the alphabet you're about to record.
-                        <input type="text" maxlength="1" id="alphabet" name="alphabet"><br>
-                        <input type="submit" value="Submit" name="action"/>
-                        <input type="submit" value="Cancel" name="action"/>
-                    </form>
-                {% endif %}
-                <h3 style="font-family:courier;">Instructions:</h3>
-                <ol style="font-family:courier;">
-                <li>Stop/Start_camera--Turn the camera on/off</li>
-                <li>Capture_alphabet_samples--capture alphabet samples from frames of a video recorded through the camera</li>
-                <li>Toggle_alphabet_prediction--Switch on/off alphabet prediction</li>
-                <li>Save_training_samples--Save the recorded samples, if any to the disk</li> 
-                {% if msg|length > 0 %}
-                    <script>
-                        console.log('got a message');
-                        alert( "{{msg}}" );
-                    </script>
-                {% endif %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+    </head>
+
+    <body>
+        
+        <form method="post" action="{{ url_for('actions') }}">
+            <div class="buttons">
+                <input type="submit" value="Stop/Start_camera" name="click" />
+                <input type="submit" value="Capture_alphabet_samples" name="click"/>
+                <input type="submit" value="Toggle_alphabet_prediction" name="click" />
+                <input type="submit" value="Save_training_samples" name="click" />
             </div>
+        </form>
+        
+        <div class="video-feed">
+        {% if parts.video == true %}
+            <img src="{{ url_for('video_feed') }}">
+        {% endif %}
         </div>
-    </div>
-</body>
+        
+        {% if parts.alphabet == true %}
+            <form method="post" action="{{ url_for('alphabet') }}" id = "alphabet-form">
+                The camera will record the features from consecutive frames in your hand. Move the hand (displaying the alphabet) around the frame as the recording hapens.
+                A countdown timer will start once you enter the alphabet. Enter the name of the alphabet you're about to record.
+                <br><br>
+                <input type="text" maxlength="1" id="alphabet" name="alphabet">
+                <div class="buttons">
+                    <input type="submit" value="Submit" name="action"/>
+                    <input type="submit" value="Cancel" name="action"/>
+                </div>
+            </form>
+        {% endif %}
+
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            Stop/Start_camera--Turn the camera on/off <br>
+            Capture_alphabet_samples--capture alphabet samples from frames of a video recorded through the camera <br>
+            Toggle_alphabet_prediction--Switch on/off alphabet prediction <br>
+            Save_training_samples--Save the recorded samples, if any to the disk <br> 
+        </div>
+        
+        {% if msg|length > 0 %}
+            <script>
+                console.log('got a message');
+                alert( "{{msg}}" );
+            </script>
+        {% endif %}
+
+    </body>
+</html>

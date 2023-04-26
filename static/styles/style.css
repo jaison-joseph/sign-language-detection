@@ -1,0 +1,72 @@
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 20px 0;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* for the input form */
+input[type="text"] {
+padding: 10px;
+font-size: 15px;
+border-radius: 5px;
+border: 2px solid #ccc;
+}
+
+/* Buttons (the 4 main buttons & alphabet form) */
+input[type="submit"] {
+background-color: #4f544f;
+color: white;
+border: none;
+padding: 10px 20px;
+margin: 10px;
+font-size: 15px;
+cursor: pointer;
+border-radius: 5px;
+}
+
+/* Button hover effect */
+input[type="submit"]:hover {
+background-color: #2b2e2b;
+}
+
+.video-feed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#alphabet-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2 px solid black;
+
+  text-align: center;
+  font-size: 15px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.instructions {
+  text-align: center;
+  font-size: 15px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.instructions h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.instructions p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: auto;
+  width: 80%;
+}

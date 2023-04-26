@@ -1,0 +1,55 @@
+/* Buttons container */
+.buttons {
+    display: flex;
+    margin-left: 10%;
+    margin-right: 10%;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  /* Button style */
+  button {
+    background-color: #4f544f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  /* Button hover effect */
+  button:hover {
+    background-color: #3e8e41;
+  }
+  
+  /* Video feed container */
+  .video-feed {
+    width: 560px;
+    height: 315px;
+    margin: auto;
+    margin-bottom: 20px;
+  }
+  
+  /* Instructions container */
+  .instructions {
+    text-align: center;
+  }
+  
+  /* Instructions title style */
+  .instructions h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  /* Instructions text style */
+  .instructions p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin: auto;
+    width: 80%;
+  }
+  
