@@ -12,6 +12,7 @@ Libsvm (https://www.csie.ntu.edu.tw/~cjlin/libsvm/)
 
 Numpy (https://numpy.org/)
     - for data handling 
+    - is required by the Mediapipe package, hence ignored in requirements.txt
 
 Flask (https://flask.palletsprojects.com/)
     - for the webpage GUI
