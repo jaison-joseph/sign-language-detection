@@ -38,7 +38,7 @@ from threading import Thread
 # global constants
 SAMPLE_COUNT_ = 200                             # the number of samples recorded when the user requests to record samples
 STORE_SIZE_ = 20                                # the maxmium number of samples that the store can hold before the user has to save them to record new ones
-FOLDER_NAME_ = 'demo_data'                      # the name of the folder (will create if non-existent) to save the recorded samples to
+FOLDER_NAME_ = 'data/demo_data'                 # the name of the folder (will create demo_data/ if non-existent) to save the recorded samples to
 MODEL_NAME_ = 'models/v5/a2z_v5_model.model'    # the location of the model to load, keep empty if you don't wish to load one
 
 
