@@ -1,6 +1,6 @@
 # Sign Language Detection
 
-A brief description of what this project does.
+A project on Interactive Machine Learning (IML). This project revolves around training and iteraction with a Support Vector Machine (SVM) designed to detected the alphabets of the American Sign Language.
 
 ## Table of Contents
 
@@ -12,6 +12,8 @@ A brief description of what this project does.
 ## Installation
 
 Python <= 3.10.10 (required)
+
+First, `cd` into the root directory of the program, then run:
 
 ```bash
 $ pip install -r requirements.txt
@@ -42,7 +44,7 @@ To run the Flask application. <br>
 $ python app.py
 ```
 
-To run the training program.
+To run the training program. Please refer to the comments on `genericTrain()` before running the training program.
 ```bash
 $ python train.py
 ```
